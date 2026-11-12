@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COFRE VERDE — Autenticação Biométrica Facial</title>
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.js"></script>
+<style>
+:root{--bg:#1F1E1D;--pn:#262624;--bd:#3A3936;--tx:#ECEBE6;--t2:#A8A69E;--p:#6D28D9;--ph:#7C3AED;--pb:#8B5CF6;--ok:#22C55E;--no:#EF4444;--w:#F59E0B}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 "Segoe UI",system-ui,sans-serif}
+header{display:flex;align-items:center;gap:14px;padding:12px 20px;background:var(--pn);border-bottom:2px solid var(--p);flex-wrap:wrap}
+header h1{margin:0;font-size:20px}header h1 b{color:var(--pb)}header small{color:var(--t2);display:block;font-size:11px}
+.sp{flex:1}.chip{font-size:12px;color:var(--t2)}
+nav{display:flex;gap:6px;padding:10px 20px;background:var(--pn);flex-wrap:wrap}
+nav button{background:transparent;border:0;color:var(--tx);padding:8px 16px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px}
+nav button:hover{background:var(--bd)}nav button.on{background:var(--p)}
+main{padding:16px 20px;max-width:1300px;margin:auto}.tab{display:none}.tab.on{display:block}
+.card{background:var(--pn);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:minmax(0,660px) minmax(0,1fr);gap:14px}@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.cam{position:relative;width:100%;max-width:640px;aspect-ratio:4/3;background:#000;border-radius:12px;overflow:hidden}
+.cam video,.cam canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cam i{position:absolute;width:46px;height:46px;border:4px solid var(--pb);z-index:3;transition:border-color .2s}
+.cam i:nth-of-type(1){left:8px;top:8px;border-right:0;border-bottom:0}.cam i:nth-of-type(2){right:8px;top:8px;border-left:0;border-bottom:0}
+.cam i:nth-of-type(3){left:8px;bottom:8px;border-right:0;border-top:0}.cam i:nth-of-type(4){right:8px;bottom:8px;border-left:0;border-top:0}
+.cam.ok i{border-color:var(--ok)}.cam.no i{border-color:var(--no)}
+button.b,select,input,textarea{font:inherit}
+.b{background:var(--p);color:#fff;border:0;border-radius:10px;padding:9px 16px;font-weight:700;cursor:pointer}.b:hover{background:var(--ph)}
+.b.g{background:var(--bd);color:var(--tx)}.b.g:hover{background:#4A4843}.b:disabled{opacity:.45;cursor:not-allowed}
+input,select,textarea{width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:9px 11px;margin:3px 0 10px}
+input[type=checkbox]{width:auto;margin:0 8px 0 0}input[type=range]{padding:0;accent-color:var(--pb)}
+label{font-size:12px;color:var(--t2);font-weight:600}h2{margin:0 0 8px;font-size:16px}
+.seg{display:flex;background:var(--bg);border-radius:10px;padding:3px;margin:4px 0 8px}.seg button{flex:1;border:0;background:none;color:var(--tx);padding:8px;border-radius:8px;cursor:pointer;font-weight:700}.seg button.on{background:var(--p)}
+.bar{height:10px;background:var(--bd);border-radius:6px;overflow:hidden}.bar div{height:100%;width:0;background:var(--pb);transition:width .15s}
+.res{border:2px solid var(--bd);text-align:center}.res .big{font-size:24px;font-weight:800;color:var(--pb)}
+.res.ok{border-color:var(--ok)}.res.ok .big{color:var(--ok)}.res.no{border-color:var(--no)}.res.no .big{color:var(--no)}
+.ph{display:flex;gap:10px;align-items:center;padding:5px 0}.ph i{width:12px;height:12px;border-radius:50%;background:var(--bd);flex:none}
+.ph.ok i{background:var(--pb)}.ph.w i{background:var(--w)}.ph div{flex:1}.ph small{color:var(--t2);display:block}.ph em{color:var(--t2);font-style:normal;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 9px;border-bottom:1px solid var(--bd);text-align:left}th{background:var(--bd)}tr.sel{background:var(--p)}
+.C{color:var(--ok)}.N{color:var(--no)}.mut{color:var(--t2)}.warn{color:var(--w)}
+.docs button{display:block;width:100%;text-align:left;margin-bottom:6px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}.kpis .card{margin:0}.kpis b{font-size:26px;display:block}
+canvas.ch{width:100%;height:220px}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:800px){.two{grid-template-columns:1fr}}
+.lock{text-align:center;padding:60px 20px}.lock b{font-size:22px;display:block;margin-bottom:6px}
+dialog{background:var(--pn);color:var(--tx);border:1px solid var(--bd);border-radius:14px;max-width:520px;width:92%}dialog::backdrop{background:#000a}
+.flash{animation:fl .5s infinite alternate}@keyframes fl{to{border-color:var(--bd)}}
+.thumbs canvas{width:32%;border-radius:8px;background:#000}
+@media print{header,nav,.noprint{display:none}body{background:#fff;color:#000}.card{border-color:#ccc;background:#fff}}
+</style>
+</head>
+<body>
+<header>
+  <div style="font-size:26px;color:var(--pb)">◆</div>
+  <h1>COFRE <b>VERDE</b><small>Autenticação Biométrica Facial · Ministério do Meio Ambiente</small></h1>
+  <div class="sp"></div>
+  <span class="chip" id="hCam">● Câmera: —</span><span class="chip" id="hMod">● Modelos: carregando…</span>
+  <span class="chip" id="hSes">Sem sessão</span><button class="b g noprint" id="bSair" style="display:none">Encerrar sessão</button>
+</header>
+<nav id="nav"></nav>
+<main>
+<!-- AUTENTICAÇÃO -->
+<section class="tab on" id="t-auth"><div class="grid">
+  <div class="card"><div class="cam" id="camA"><video id="vid" autoplay muted playsinline></video><canvas id="ov" width="640" height="480"></canvas><i></i><i></i><i></i><i></i></div>
+    <p id="aMsg" style="font-weight:700;text-align:center;margin:10px 0 6px">Iniciando…</p><div class="bar"><div id="aBar"></div></div>
+    <p class="mut" id="aInfo" style="text-align:center;margin:6px 0 0"></p>
+    <div style="text-align:center;margin-top:8px"><button class="b g" id="bCam">Reiniciar câmera</button></div></div>
+  <div>
+    <div class="card"><h2>Nível de acesso solicitado</h2><div class="seg" id="segN"><button class="on" data-n="1">Nível 1</button><button data-n="2">Nível 2</button><button data-n="3">Nível 3</button></div>
+      <div class="mut" id="nDesc">Permissão geral</div><div class="mut" id="tent" style="margin-top:6px"></div></div>
+    <div class="card res" id="resC"><div class="big" id="rBig">AGUARDANDO</div><b id="rWho">—</b><div class="mut" id="rDet">Decisão após ~2 s de rosto estável + piscada.</div></div>
+    <div class="card"><h2>Pipeline ao vivo</h2><div id="phA"></div></div>
+  </div></div></section>
+
+<!-- CADASTRO -->
+<section class="tab" id="t-cad"><div class="grid">
+  <div class="card" id="cadForm"><h2>Novo usuário</h2><div class="mut" id="cadModo" style="margin-bottom:8px"></div>
+    <label>Nome completo</label><input id="cNome"><label>Cargo</label><input id="cCargo">
+    <label>Nível de acesso</label><div class="seg" id="segC"><button class="on" data-n="1">Nível 1</button><button data-n="2">Nível 2</button><button data-n="3">Nível 3</button></div>
+    <label>Divisão (Nível 2)</label><select id="cDiv"></select>
+    <label style="display:flex;align-items:center;margin:6px 0 10px"><input type="checkbox" id="cLgpd"> Li e concordo com o Aviso de Privacidade (LGPD) e consinto com o tratamento dos meus dados biométricos.</label>
+    <button class="b g" id="bLgpd" style="margin-bottom:12px">Ler aviso de privacidade</button>
+    <h2 id="cCnt">Amostras: 0/5</h2><div class="bar"><div id="cBar"></div></div><p class="mut" id="cOri"></p><p class="warn" id="cAv"></p>
+    <button class="b" id="bCap">Capturar amostra</button> <button class="b g" id="bRef">Refazer</button>
+    <button class="b" id="bOk" style="display:block;width:100%;margin-top:12px" disabled>Concluir cadastro</button></div>
+  <div class="card"><div class="cam" id="camC"><i></i><i></i><i></i><i></i></div><p class="mut">A câmera da aba Autenticação é compartilhada aqui.</p><p id="cMsg" style="font-weight:700"></p></div>
+</div><div class="card lock" id="cadLock" style="display:none"><b>🔒 Acesso restrito</b>Somente o Ministro (nível 3) autenticado pode cadastrar usuários.</div></section>
+
+<!-- PIPELINE -->
+<section class="tab" id="t-pipe"><div class="grid"><div class="card"><h2>Status das 5 fases</h2><div id="phP"></div>
+  <p class="mut" id="pCls">—</p><p class="mut" id="pQ"></p></div>
+  <div class="card"><h2>Antes × Depois (Fase 2) e Segmentação (Fase 3)</h2><div class="thumbs"><canvas id="pA" width="320" height="240"></canvas> <canvas id="pB" width="320" height="240"></canvas> <canvas id="pC" width="320" height="240"></canvas></div>
+  <p class="mut">Original · normalizada (brilho/contraste/ruído) · cinza</p><h2>Fase 4 — vetor de 128 dimensões</h2><canvas id="pE" width="600" height="90" style="width:100%;background:var(--bg);border-radius:8px"></canvas></div></div></section>
+
+<!-- COFRE -->
+<section class="tab" id="t-cofre"><div class="grid" id="cofreBox"><div class="card"><b id="cfWho"></b><div class="mut" id="cfNv"></div><div class="docs" id="docs" style="margin-top:10px"></div><div class="mut" style="margin:10px 0 4px">Áreas restritas (tentativas são registradas):</div><div id="restr"></div></div>
+  <div class="card"><h2 id="dT">Selecione um documento</h2><div class="mut" id="dM"></div><div id="dBan" style="display:none;background:var(--no);color:#fff;font-weight:800;padding:10px;border-radius:10px;margin:8px 0">ACESSO NEGADO — tentativa registrada</div><p id="dC" style="white-space:pre-wrap"></p></div></div>
+  <div class="card lock" id="cofreLock"><b>🔒 Cofre trancado</b>Autentique-se na aba Autenticação.</div></section>
+
+<!-- LOGS -->
+<section class="tab" id="t-logs"><div class="card"><div class="seg" id="segL" style="max-width:420px"><button class="on" data-f="">Todos</button><button data-f="CONCEDIDO">Concedidos</button><button data-f="NEGADO">Negados</button><button data-f="OUTRO">Outros</button></div>
+  <div class="grid" style="grid-template-columns:1fr 240px"><div style="overflow:auto;max-height:520px"><table><thead><tr><th>Data/hora</th><th>Usuário</th><th>Resultado</th><th>Nív.</th><th>Conf.</th><th>Motivo</th></tr></thead><tbody id="lb"></tbody></table></div>
+  <div><canvas id="lImg" width="240" height="180" style="width:100%;background:#000;border-radius:10px"></canvas><p class="mut">Captura da tentativa selecionada</p></div></div></div></section>
+
+<!-- RELATÓRIOS -->
+<section class="tab" id="t-rel"><div class="card noprint" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label>Período</label><select id="rPer" style="width:190px;margin:0"><option value="0">Hoje</option><option value="7">Últimos 7 dias</option><option value="30" selected>Últimos 30 dias</option><option value="">Todo o período</option></select>
+  <button class="b g" id="bCsv">Exportar CSV</button><button class="b g" id="bPdf">Exportar PDF (imprimir)</button></div>
+  <div class="kpis" id="kpis"></div><div class="two"><div class="card"><h2>Acessos por dia</h2><canvas class="ch" id="g1" width="560" height="220"></canvas></div><div class="card"><h2>Tentativas por nível</h2><canvas class="ch" id="g2" width="560" height="220"></canvas></div>
+  <div class="card"><h2>Usuários mais ativos</h2><canvas class="ch" id="g3" width="560" height="220"></canvas></div><div class="card"><h2>Sucesso × negação</h2><canvas class="ch" id="g4" width="560" height="220"></canvas></div></div></section>
+
+<!-- ADMIN -->
+<section class="tab" id="t-adm"><div class="grid" id="admBox" style="grid-template-columns:minmax(0,1fr) 340px"><div class="card"><h2>Usuários</h2><div style="overflow:auto"><table><thead><tr><th>Nome</th><th>Cargo</th><th>Nív.</th><th>Divisão</th><th></th></tr></thead><tbody id="ub"></tbody></table></div></div>
+  <div><div class="card"><h2>Ajustes</h2><label id="tolL"></label><input type="range" id="tol" min="0.3" max="0.7" step="0.01"><label id="tesL"></label><input type="range" id="tes" min="1" max="5" step="0.5"><button class="b" id="bAj" style="width:100%">Salvar ajustes</button></div>
+  <div class="card"><h2>Backup</h2><p class="mut">O arquivo contém dados e a chave de criptografia. Guarde-o com segurança.</p><button class="b" id="bBk" style="width:100%;margin-bottom:8px">Gerar backup</button><button class="b g" id="bRs" style="width:100%">Restaurar backup</button><input type="file" id="fRs" accept=".json" style="display:none"></div></div></div>
+  <div class="card lock" id="admLock"><b>🔒 Painel administrativo</b>Exclusivo do Ministro (nível 3).</div></section>
+</main>
+
+<dialog id="dlg"><h2>Editar usuário</h2><label>Nome</label><input id="eN"><label>Cargo</label><input id="eC"><label>Nível</label><select id="eNv"><option>1</option><option>2</option><option>3</option></select><label>Divisão (nível 2)</label><select id="eD"></select><p class="warn" id="eErr"></p><button class="b" id="eOk">Salvar</button> <button class="b g" id="eNo">Cancelar</button></dialog>
+<dialog id="dlgL"><h2>Aviso de Privacidade (LGPD)</h2><p style="white-space:pre-wrap;font-size:13px">Finalidade: identificar e autenticar pessoas autorizadas ao cofre do Ministério do Meio Ambiente e manter auditoria.
+
+Dados: nome, cargo, nível, divisão, vetor facial de 128 números (não a foto) e, nas tentativas de acesso, uma miniatura do rosto, data/hora e resultado. Dados biométricos são dados pessoais sensíveis (LGPD art. 11).
+
+Armazenamento: SOMENTE neste navegador/computador (IndexedDB), criptografados com AES-GCM. Nada é enviado à internet (apenas os modelos de IA são baixados de uma CDN).
+
+Direitos: acesso, correção, eliminação e revogação do consentimento pelo administrador; remover o usuário apaga o vetor facial.</p><button class="b" onclick="dlgL.close()">Fechar</button></dialog>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const MODEL='https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model/';
+const DIV=['Toxicologia Ambiental','Agrotóxicos e Biocidas','Resíduos Químicos','Recursos Hídricos'];
+const NDESC={1:'Nível 1 — Permissão geral',2:'Nível 2 — Diretor de divisão',3:'Nível 3 — Ministro'};
+const AV='\n\n[Documento fictício para fins acadêmicos.]';
+const DOCS=[
+ {id:'N1-01',t:'Protocolo geral de segurança do cofre',n:1,d:'',c:'Acesso individual, registro obrigatório de entradas e saídas. Em caso de falha do sistema biométrico, acione a Coordenação de Segurança.'+AV},
+ {id:'N1-02',t:'Lista pública de substâncias monitoradas',n:1,d:'',c:'Categorias genéricas: metais pesados, biotoxinas aquáticas, resíduos industriais e biocidas.'+AV},
+ {id:'N1-03',t:'Procedimentos de emergência e evacuação',n:1,d:'',c:'Rotas de saída, pontos de encontro e telefones internos.'+AV},
+ {id:'N2-TA',t:'Biotoxinas em bacias (Toxicologia Ambiental)',n:2,d:DIV[0],c:'Série histórica simulada de cianotoxinas em reservatórios fictícios; queda de 12% no semestre.'+AV},
+ {id:'N2-AB',t:'Dossiê de biocidas (Agrotóxicos e Biocidas)',n:2,d:DIV[1],c:'Parecer fictício sobre reavaliação de três princípios ativos hipotéticos.'+AV},
+ {id:'N2-RQ',t:'Mapa de passivos ambientais (Resíduos Químicos)',n:2,d:DIV[2],c:'Inventário simulado de áreas contaminadas em reabilitação.'+AV},
+ {id:'N2-RH',t:'Monitoramento hídrico (Recursos Hídricos)',n:2,d:DIV[3],c:'Pontos de coleta fictícios e indicadores de qualidade da água.'+AV},
+ {id:'N3-01',t:'Plano nacional de contingência toxicológica',n:3,d:'',c:'Cadeia de comando para incidentes de grande escala (simulado).'+AV},
+ {id:'N3-02',t:'Inventário consolidado de toxinas restritas',n:3,d:'',c:'Índice consolidado fictício, visível só ao Ministro.'+AV},
+ {id:'N3-03',t:'Ata reservada do comitê de segurança',n:3,d:'',c:'Deliberações simuladas sobre auditoria do cofre.'+AV}];
+const pode=(d,nv,dv)=>d.n===1||(d.n===2&&(nv>=3||(nv===2&&dv===d.d)))||(d.n===3&&nv>=3);
+
+/* ---------- armazenamento local + criptografia ---------- */
+const DB=(()=>{const p=new Promise((ok,er)=>{const r=indexedDB.open('cofre_verde',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>ok(r.result);r.onerror=()=>er(r.error)});
+ const tx=async(m,f)=>{const d=await p;return new Promise((ok,er)=>{const t=d.transaction('kv',m);const r=f(t.objectStore('kv'));t.oncomplete=()=>ok(r.result);t.onerror=()=>er(t.error)})};
+ return{get:k=>tx('readonly',s=>s.get(k)),set:(k,v)=>tx('readwrite',s=>s.put(v,k))}})();
+const b64=u=>{let s='';for(const x of u)s+=String.fromCharCode(x);return btoa(s)},unb=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+let KEY=null,RAW=null;
+async function initKey(){RAW=await DB.get('key');if(!RAW){RAW=crypto.getRandomValues(new Uint8Array(32));await DB.set('key',RAW)}
+ KEY=await crypto.subtle.importKey('raw',RAW,'AES-GCM',false,['encrypt','decrypt'])}
+async function enc(u8){const iv=crypto.getRandomValues(new Uint8Array(12));const c=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},KEY,u8));const o=new Uint8Array(12+c.length);o.set(iv);o.set(c,12);return b64(o)}
+async function dec(s){const o=unb(s);return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:o.slice(0,12)},KEY,o.slice(12)))}
+
+const S={users:[],logs:[],tol:.5,tes:2,tent:0,bloq:0,sess:null,nivel:1,tab:'auth',act:Date.now()};
+const save=()=>Promise.all([DB.set('users',S.users.map(({d,...u})=>u)),DB.set('logs',S.logs.slice(0,500)),DB.set('cfg',{tol:S.tol,tes:S.tes,tent:S.tent,bloq:S.bloq})]);
+async function load(){await initKey();const c=await DB.get('cfg');if(c)Object.assign(S,c);S.logs=(await DB.get('logs'))||[];
+ const us=(await DB.get('users'))||[];S.users=[];for(const u of us){try{u.d=new Float32Array((await dec(u.enc)).buffer);S.users.push(u)}catch(e){console.error('usuário ilegível',u.nome)}}}
+async function addLog(u,res,nv,conf,m,img){S.logs.unshift({t:new Date().toLocaleString('pt-BR'),ts:Date.now(),u,res,nv,conf,m,img:img?await enc(new TextEncoder().encode(img)):null});await save()}
+const hasMin=()=>S.users.some(u=>u.nivel===3);
+
+/* ---------- fases 4–5: distância, confiança, classificação ---------- */
+const dist=(a,b)=>{let s=0;for(let i=0;i<128;i++){const d=a[i]-b[i];s+=d*d}return Math.sqrt(s)};
+const mean=L=>{const m=new Float32Array(128);for(const v of L)for(let i=0;i<128;i++)m[i]+=v[i]/L.length;return m};
+function conf(d,t){const l=(1-d)/((1-t)*2);const v=d>t?l:l+(1-l)*Math.pow((l-.5)*2,.2);return Math.min(1,Math.max(0,v))*100}
+function classify(e){if(!S.users.length)return{ok:false,u:null,d:1,c:0};let b=null,bd=9;for(const u of S.users){const d=dist(u.d,e);if(d<bd){bd=d;b=u}}
+ return{ok:bd<=S.tol,u:bd<=S.tol?b:null,d:bd,c:conf(bd,S.tol)}}
+
+/* ---------- vivacidade (EAR) ---------- */
+const ear=p=>{const D=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);return(D(p[1],p[5])+D(p[2],p[4]))/(2*D(p[0],p[3]))};
+class Blink{constructor(){this.reset()}reset(){this.h=[];this.cl=false;this.n=0}
+ push(e){this.h.push(e);if(this.h.length>40)this.h.shift();if(this.h.length<6)return;const s=[...this.h].sort((a,b)=>a-b),ab=s[Math.floor(s.length*.8)];if(ab<.12)return;
+  if(e<ab*.75||e<.15)this.cl=true;else if(this.cl){this.cl=false;this.n++}}}
+
+/* ---------- câmera + pipeline por quadro ---------- */
+const vid=$('#vid'),ov=$('#ov'),ox=ov.getContext('2d');
+const wc=document.createElement('canvas'),wx=wc.getContext('2d',{willReadFrequently:true});wc.width=640;wc.height=480;
+let camOk=false,modelsOk=false,R=null,tEnc=0,PH=[];
+async function startCam(){
+ try{if(vid.srcObject)vid.srcObject.getTracks().forEach(t=>t.stop());
+  vid.srcObject=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'}});await vid.play();camOk=true;$('#hCam').textContent='● Câmera: ativa';$('#hCam').style.color='var(--pb)'}
+ catch(e){camOk=false;const m={NotAllowedError:'Permissão da câmera negada. Libere o acesso no navegador.',NotFoundError:'Nenhuma câmera encontrada.',NotReadableError:'Câmera ocupada por outro aplicativo.'}[e.name]||('Erro na câmera: '+e.message);
+  $('#hCam').textContent='● Câmera: indisponível';$('#hCam').style.color='var(--w)';$('#aMsg').textContent=m}}
+async function loadModels(){try{await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODEL),faceapi.nets.faceLandmark68Net.loadFromUri(MODEL),faceapi.nets.faceRecognitionNet.loadFromUri(MODEL)]);modelsOk=true;$('#hMod').textContent='● Modelos: prontos';$('#hMod').style.color='var(--pb)'}
+ catch(e){$('#hMod').textContent='● Modelos: falha (precisa de internet)';$('#hMod').style.color='var(--w)'}}
+
+function pre(){ // FASE 2
+ wc.width=320;wc.height=240;wx.filter='none';wx.drawImage(vid,0,0,320,240);const d=wx.getImageData(0,0,320,240).data,n=76800,g=new Float32Array(n);let s=0;
+ for(let i=0;i<n;i++){g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];s+=g[i]}const lum=s/n;let m=0,m2=0,c=0;
+ for(let y=1;y<239;y+=2)for(let x=1;x<319;x+=2){const i=y*320+x,l=4*g[i]-g[i-1]-g[i+1]-g[i-320]-g[i+320];m+=l;m2+=l*l;c++}
+ const sharp=m2/c-(m/c)**2,k=Math.min(2,Math.max(.6,128/Math.max(lum,1)));
+ wc.width=640;wc.height=480;wx.filter=`brightness(${k}) contrast(1.15) blur(0.4px)`;wx.drawImage(vid,0,0,640,480);wx.filter='none';return{lum,sharp}}
+
+async function frame(wantDesc){
+ const r={t:performance.now(),st:[0,'ok',0,0,0,0],ms:[0,0,0,0,0,0],dt:['','','','','',''],err:'',msg:''};
+ r.st=['','ok','','','',''];let t0=performance.now();const q=pre();r.lum=q.lum;r.sharp=q.sharp;r.ms[2]=performance.now()-t0;r.dt[1]=`${vid.videoWidth}×${vid.videoHeight}`;r.dt[2]=`luz ${q.lum.toFixed(0)} · nitidez ${q.sharp.toFixed(0)}`;
+ if(q.lum<45){r.err='luz';r.msg=`Pouca luz (${q.lum.toFixed(0)}). Aumente a iluminação.`;r.st[2]='w';return r}
+ if(q.lum>220){r.err='luz';r.msg='Excesso de luz. Evite contraluz.';r.st[2]='w';return r}
+ if(q.sharp<6){r.err='borrada';r.msg='Imagem borrada. Fique parado e limpe a lente.';r.st[2]='w';return r}
+ r.st[2]='ok';t0=performance.now();
+ const o=new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:.5});
+ const L=await faceapi.detectAllFaces(wc,o).withFaceLandmarks();r.ms[3]=performance.now()-t0;r.n=L.length;r.dt[3]=`${L.length} rosto(s) · 68 marcos`;
+ if(!L.length){r.err='sem_rosto';r.msg='Nenhum rosto detectado. Posicione-se de frente.';r.st[3]='w';return r}
+ if(L.length>1){r.err='multi';r.msg=`${L.length} rostos detectados. Apenas uma pessoa por vez.`;r.st[3]='w';r.all=L;return r}
+ r.det=L[0];r.st[3]='ok';const lm=L[0].landmarks;r.ear=(ear(lm.getLeftEye())+ear(lm.getRightEye()))/2;
+ if(!wantDesc)return r;
+ t0=performance.now();const dd=await faceapi.computeFaceDescriptor(wc,L[0]);r.ms[4]=performance.now()-t0;
+ if(!dd){r.err='enc';r.msg='Falha ao extrair características.';r.st[4]='w';return r}
+ r.desc=dd;r.st[4]='ok';r.dt[4]='vetor de 128 dimensões';t0=performance.now();r.cls=classify(dd);r.ms[5]=performance.now()-t0;
+ r.st[5]=r.cls.ok?'ok':'w';r.dt[5]=r.cls.ok?`${r.cls.u.nome} · ${r.cls.c.toFixed(0)}%`:`desconhecido · d=${r.cls.d.toFixed(2)}`;return r}
+const FN=['1 · Aquisição','2 · Pré-processamento','3 · Segmentação','4 · Extração (128-D)','5 · Classificação'];
+function renderPh(el,r){el.innerHTML=FN.map((n,i)=>{const s=r?r.st[i+1]:'';return`<div class="ph ${s}"><i></i><div><b>${n}</b><small>${r&&r.dt[i+1]?r.dt[i+1]:'—'}</small></div><em>${r&&r.ms[i+1]?r.ms[i+1].toFixed(0)+' ms':''}</em></div>`}).join('')}
+function crop(r){const b=r.det.detection.box,c=document.createElement('canvas');c.width=c.height=120;const m=b.width*.25;c.getContext('2d').drawImage(wc,b.x-m,b.y-m,b.width+2*m,b.height+2*m,0,0,120,120);return c.toDataURL('image/jpeg',.7)}
+
+/* ---------- máquina de autenticação ---------- */
+const A={st:'wait',ref:null,t0:0,encs:[],bl:new Blink(),last:0,tres:0,tnf:0,img:null,msg:'Posicione o rosto em frente à câmera.',prog:0};
+const lockLeft=()=>Math.max(0,Math.ceil((S.bloq-Date.now())/1000));
+const resetA=()=>{A.ref=null;A.t0=0;A.encs=[];A.bl.reset();A.prog=0};
+async function authStep(r){
+ const now=r.t,rest=lockLeft();
+ if(rest>0){A.st='lock';A.msg=`SISTEMA BLOQUEADO por tentativas negadas. Aguarde ${rest} s.`;resetA();return}
+ if(A.st==='lock'){A.st='wait';S.tent=0;save()}
+ if(A.st==='res'){if(!r.det&&r.err!=='multi'){A.tnf=A.tnf||now;if(now-A.tnf>1200){A.st='wait';A.tnf=0;showRes(null)}}else{A.tnf=0;if(now-A.tres>8000){A.st='wait';showRes(null)}}return}
+ if(r.err){if(r.err==='sem_rosto'&&A.ref&&now-A.last<600)return;A.msg=r.msg;A.st='wait';resetA();return}
+ const b=r.det.detection.box,cx=b.x+b.width/2,cy=b.y+b.height/2;A.last=now;
+ const est=A.ref&&Math.abs(cx-A.ref[0])<=.3*A.ref[2]&&Math.abs(cy-A.ref[1])<=.3*A.ref[2]&&b.width/A.ref[2]>.7&&b.width/A.ref[2]<1.4;
+ if(!est){resetA();A.ref=[cx,cy,b.width];A.t0=now}
+ A.bl.push(r.ear);if(r.desc){A.encs.push(r.desc);A.img=crop(r)}
+ const el=(now-A.t0)/1000;A.prog=Math.min(1,el/S.tes);
+ if(el<S.tes||A.encs.length<2){A.st='stab';A.msg='Mantenha o rosto estável e olhe para a câmera…';return}
+ if(!A.bl.n){A.st='blink';A.msg='Pisque os olhos para confirmar vivacidade.';if(el>S.tes+8)await decide(false);return}
+ await decide(true)}
+async function decide(vivo){
+ const nv=S.nivel,c=classify(mean(A.encs));let ok=false,m;
+ if(!vivo)m='Vivacidade não comprovada (nenhuma piscada): possível foto ou vídeo.';
+ else if(!c.ok)m=`Rosto não reconhecido (distância ${c.d.toFixed(3)} > tolerância ${S.tol.toFixed(2)}).`;
+ else if(c.u.nivel<nv)m=`Nível insuficiente: usuário nível ${c.u.nivel}, solicitado nível ${nv}.`;
+ else{ok=true;m=`Identidade confirmada; nível ${c.u.nivel} atende ao nível ${nv}.`}
+ let lockNow=false;if(ok)S.tent=0;else{S.tent++;if(S.tent>=3){S.bloq=Date.now()+60000;S.tent=0;lockNow=true}}
+ await addLog(c.ok?c.u.nome:'desconhecido',ok?'CONCEDIDO':'NEGADO',nv,c.c,m,A.img);
+ A.st='res';A.tres=performance.now();A.tnf=0;const img=A.img;resetA();showRes({ok,c,m,nv,lockNow});
+ if(ok){S.sess={u:c.u,nv,t:Date.now()};beep(880,.15);hdr();setTimeout(()=>{if(S.sess)go('cofre')},2500)}else beep(1200,.25,lockNow?6:2)}
+function showRes(d){const c=$('#resC'),cam=$('#camA');c.className='card res'+(d?(d.ok?' ok':' no'):'');cam.className='cam'+(d?(d.ok?' ok':' no'):'');
+ if(!d){$('#rBig').textContent='AGUARDANDO';$('#rWho').textContent='—';$('#rDet').textContent='Decisão após ~2 s de rosto estável + piscada.';return}
+ $('#rBig').textContent=d.ok?'ACESSO CONCEDIDO':'ACESSO NEGADO';$('#rWho').textContent=d.c.ok?`${d.c.u.nome} · ${d.c.u.cargo}`:'Pessoa não identificada';
+ $('#rDet').textContent=d.m+(d.ok?`\nConfiança ${d.c.c.toFixed(0)}% · abrindo o cofre…`:'')}
+function beep(f,s,n=1){try{const a=beep.a||(beep.a=new AudioContext());for(let i=0;i<n;i++){const o=a.createOscillator(),g=a.createGain();o.frequency.value=f;g.gain.value=.08;o.connect(g);g.connect(a.destination);o.start(a.currentTime+i*(s+.08));o.stop(a.currentTime+i*(s+.08)+s)}}catch(e){}}
+
+/* ---------- cadastro ---------- */
+const C={s:[],nivel:1,photo:null};
+const ORI=['Amostra 1: de frente, expressão neutra.','Amostra 2: vire levemente o rosto para um lado.','Amostra 3: vire levemente para o outro lado.','Amostra 4: dê um sorriso natural.','Amostra 5: incline a cabeça para cima ou para baixo.'];
+const cadModo=()=>!hasMin()?'primeiro':(sessOk(3)?'ok':'negado');
+function cadUI(){const m=cadModo();$('#cadLock').style.display=m==='negado'?'block':'none';document.querySelector('#t-cad .grid').style.display=m==='negado'?'none':'';
+ if(m==='primeiro'){C.nivel=3;setSeg('#segC',3);$('#cadModo').textContent='PRIMEIRO USO: este cadastro define o Ministro (nível 3), administrador do sistema.'}else $('#cadModo').textContent='Cadastro realizado pelo Ministro autenticado.';
+ $('#cDiv').disabled=C.nivel!==2;$('#cCnt').textContent=`Amostras: ${C.s.length}/5`;$('#cBar').style.width=C.s.length*20+'%';$('#cOri').textContent=C.s.length<5?ORI[C.s.length]:'Amostras completas. Revise e conclua.';
+ $('#bOk').disabled=C.s.length<5;$('#bCap').disabled=C.s.length>=5}
+function addSample(e,r){if(C.s.length&&dist(C.s[0],e)>.55){$('#cAv').textContent='Esta amostra parece ser de OUTRA pessoa. Use sempre o mesmo rosto.';return}
+ $('#cAv').textContent='';if(!C.s.length)C.photo=crop(r);C.s.push(e);cadUI()}
+$('#bCap').onclick=()=>{if(!R||performance.now()-R.t>1200||R.err||!R.desc){$('#cAv').textContent=(R&&R.msg)||'Sem imagem recente da câmera.';return}addSample(R.desc,R)};
+$('#bRef').onclick=()=>{C.s=[];C.photo=null;cadUI()};
+$('#bLgpd').onclick=()=>$('#dlgL').showModal();
+$('#bOk').onclick=async()=>{const nome=$('#cNome').value.trim(),cargo=$('#cCargo').value.trim(),m=cadModo();
+ if(m==='negado')return alert('Sessão de Ministro ausente ou expirada.');if(nome.length<3||cargo.length<2)return alert('Preencha nome e cargo.');
+ if(!$('#cLgpd').checked)return alert('É obrigatório aceitar o Aviso de Privacidade (LGPD).');
+ const nv=m==='primeiro'?3:C.nivel;if(S.users.some(u=>u.nome.toLowerCase()===nome.toLowerCase()))return alert('Já existe um usuário com este nome.');
+ if(nv===3&&hasMin())return alert('Já existe um Ministro (nível 3).');
+ const med=mean(C.s),dup=classify(med);if(dup.ok)return alert(`Este rosto já pertence a "${dup.u.nome}".`);
+ const u={id:Date.now(),nome,cargo,nivel:nv,divisao:nv===2?$('#cDiv').value:(nv===3?'Gabinete do Ministro':'Geral'),enc:await enc(new Uint8Array(med.buffer)),criado:new Date().toLocaleString('pt-BR'),d:med};
+ S.users.push(u);await save();await addLog(S.sess?S.sess.u.nome:'sistema','ADMIN',nv,null,`Cadastro de "${nome}" (nível ${nv}).`);
+ alert(`"${nome}" cadastrado(a) com nível ${nv}. Dados faciais armazenados criptografados.`);$('#cNome').value=$('#cCargo').value='';$('#cLgpd').checked=false;C.s=[];C.photo=null;cadUI()};
+
+/* ---------- sessão, abas, cofre ---------- */
+const sessOk=(min=1)=>S.sess&&S.sess.nv>=min&&Date.now()-S.act<300000;
+function hdr(){$('#hSes').textContent=S.sess?`● ${S.sess.u.nome} · Nível ${S.sess.nv}`:'Sem sessão';$('#hSes').style.color=S.sess?'var(--pb)':'var(--t2)';$('#bSair').style.display=S.sess?'':'none'}
+$('#bSair').onclick=async()=>{if(S.sess)await addLog(S.sess.u.nome,'SESSAO',S.sess.nv,null,'Sessão encerrada.');S.sess=null;hdr();go('auth')};
+const TABS=[['auth','Autenticação'],['cad','Cadastro'],['pipe','Pipeline'],['cofre','Cofre'],['logs','Logs'],['rel','Relatórios'],['adm','Admin']];
+$('#nav').innerHTML=TABS.map(([k,n])=>`<button data-k="${k}">${n}</button>`).join('');
+$('#nav').onclick=e=>{if(e.target.dataset.k)go(e.target.dataset.k)};
+function go(k){S.tab=k;$$('.tab').forEach(t=>t.classList.toggle('on',t.id==='t-'+k));$$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+ if(k==='cad'){moveCam('#camC');cadUI()}else if(k==='auth'){moveCam('#camA');A.st='wait';resetA();showRes(null)}
+ if(k==='cofre')cofre();if(k==='logs')logs();if(k==='rel')rel();if(k==='adm')adm()}
+function moveCam(sel){const c=$(sel);if(vid.parentElement!==c){c.prepend(ov);c.prepend(vid)}}
+function setSeg(id,n){$$(id+' button').forEach(b=>b.classList.toggle('on',+b.dataset.n===n))}
+$('#segN').onclick=e=>{if(!e.target.dataset.n)return;S.nivel=+e.target.dataset.n;setSeg('#segN',S.nivel);$('#nDesc').textContent=NDESC[S.nivel]};
+$('#segC').onclick=e=>{if(!e.target.dataset.n||!hasMin())return;C.nivel=+e.target.dataset.n;setSeg('#segC',C.nivel);cadUI()};
+$('#cDiv').innerHTML=DIV.map(d=>`<option>${d}</option>`).join('');$('#eD').innerHTML=$('#cDiv').innerHTML;
+$('#bCam').onclick=startCam;
+['click','keydown'].forEach(ev=>addEventListener(ev,()=>S.act=Date.now()));
+
+function cofre(){const ok=sessOk();$('#cofreLock').style.display=ok?'none':'block';$('#cofreBox').style.display=ok?'':'none';if(!ok)return;
+ const s=S.sess;$('#cfWho').textContent=`${s.u.nome} — ${s.u.cargo}`;$('#cfNv').textContent=`Acesso efetivo: Nível ${s.nv}`+(s.nv===2?` · ${s.u.divisao}`:'');
+ $('#docs').innerHTML='';DOCS.filter(d=>pode(d,s.nv,s.u.divisao)).forEach(d=>{const b=document.createElement('button');b.className='b g';b.textContent=`${d.id} · ${d.t}`;b.onclick=async()=>{$('#dBan').style.display='none';$('#dT').textContent=d.t;$('#dM').textContent=`${d.id} · Nível ${d.n}`;$('#dC').textContent=d.c;await addLog(s.u.nome,'CONSULTA',d.n,null,`Documento ${d.id} consultado.`)};$('#docs').append(b)});
+ $('#restr').innerHTML='';const neg=async(n,m)=>{await addLog(s.u.nome,'NEGADO',n,null,m);$('#dT').textContent='ACESSO NEGADO';$('#dM').textContent='';$('#dC').textContent='Seu nível não permite abrir este conteúdo.\nA tentativa foi registrada no log de auditoria.\n\n'+m;$('#dBan').style.display='block';beep(1200,.25,2)};
+ [2,3].filter(n=>n>s.nv).forEach(n=>{const b=document.createElement('button');b.className='b g';b.style.cssText='width:100%;margin-bottom:6px';b.textContent=`Tentar acessar compartimento de Nível ${n}`;b.onclick=()=>neg(n,`Tentativa de acessar compartimento de nível ${n} com nível efetivo ${s.nv}.`);$('#restr').append(b)});
+ if(s.nv===2){const o=DOCS.find(d=>d.n===2&&d.d!==s.u.divisao),b=document.createElement('button');b.className='b g';b.style.width='100%';b.textContent='Tentar acessar divisão de outra área';b.onclick=()=>neg(2,`Tentativa de acessar ${o.id} (${o.d}) por diretor de "${s.u.divisao}".`);$('#restr').append(b)}}
+
+/* ---------- logs ---------- */
+let lf='';$('#segL').onclick=e=>{if(e.target.dataset.f===undefined)return;lf=e.target.dataset.f;$$('#segL button').forEach(b=>b.classList.toggle('on',b===e.target));logs()};
+function logs(){const L=S.logs.filter(l=>!lf||(lf==='OUTRO'?!['CONCEDIDO','NEGADO'].includes(l.res):l.res===lf)).slice(0,300);
+ $('#lb').innerHTML=L.map((l,i)=>`<tr data-i="${S.logs.indexOf(l)}"><td>${l.t}</td><td>${esc(l.u)}</td><td class="${l.res[0]==='C'&&l.res==='CONCEDIDO'?'C':l.res==='NEGADO'?'N':'mut'}">${l.res}</td><td>${l.nv||'—'}</td><td>${l.conf!=null?l.conf.toFixed(0)+'%':''}</td><td>${esc(l.m)}</td></tr>`).join('')}
+$('#lb').onclick=async e=>{const tr=e.target.closest('tr');if(!tr)return;$$('#lb tr').forEach(x=>x.classList.remove('sel'));tr.classList.add('sel');const l=S.logs[+tr.dataset.i],c=$('#lImg').getContext('2d');c.clearRect(0,0,240,180);
+ if(l.img){const im=new Image();im.onload=()=>c.drawImage(im,30,0,180,180);im.src=new TextDecoder().decode(await dec(l.img))}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- relatórios ---------- */
+function stats(){const p=$('#rPer').value,lim=p===''?0:new Date(new Date().setHours(0,0,0,0)).getTime()-(+p)*864e5;
+ const L=S.logs.filter(l=>['CONCEDIDO','NEGADO'].includes(l.res)&&l.ts>=lim);const c=L.filter(l=>l.res==='CONCEDIDO').length;
+ const day={},niv={1:[0,0],2:[0,0],3:[0,0]},usr={};L.forEach(l=>{const d=new Date(l.ts).toLocaleDateString('pt-BR').slice(0,5);day[d]=(day[d]||0)+1;if(niv[l.nv])niv[l.nv][l.res==='CONCEDIDO'?0:1]++;if(l.u!=='desconhecido')usr[l.u]=(usr[l.u]||0)+1});
+ return{L,t:L.length,c,n:L.length-c,day,niv,usr:Object.entries(usr).sort((a,b)=>b[1]-a[1]).slice(0,8)}}
+function bars(id,labels,series,cols,horiz){const cv=$(id),x=cv.getContext('2d'),W=cv.width,H=cv.height;x.clearRect(0,0,W,H);x.font='12px sans-serif';x.fillStyle='#A8A69E';
+ if(!labels.length){x.textAlign='center';x.fillText('Sem dados no período',W/2,H/2);return}
+ const mx=Math.max(1,...series.flat()),k=series.length,n=labels.length;
+ if(horiz){const h=(H-10)/n;labels.forEach((l,i)=>{x.fillStyle='#A8A69E';x.textAlign='right';x.fillText(l.slice(0,18),130,i*h+h/2+4);x.fillStyle=cols[0];x.fillRect(138,i*h+4,(W-190)*series[0][i]/mx,h-8);x.fillStyle='#ECEBE6';x.textAlign='left';x.fillText(series[0][i],142+(W-190)*series[0][i]/mx,i*h+h/2+4)});return}
+ const w=(W-40)/n;labels.forEach((l,i)=>{x.fillStyle='#A8A69E';x.textAlign='center';x.fillText(l,30+i*w+w/2,H-6);series.forEach((s,j)=>{const bw=w*.7/k,hh=(H-40)*s[i]/mx;x.fillStyle=cols[j];x.fillRect(30+i*w+w*.15+j*bw,H-24-hh,bw-2,hh)})})}
+function rel(){const s=stats();$('#kpis').innerHTML=[['Total',s.t,'var(--pb)'],['Concedidos',s.c,'var(--ok)'],['Negados',s.n,'var(--no)'],['Taxa de sucesso',(s.t?100*s.c/s.t:0).toFixed(1)+'%','var(--pb)'],['Taxa de negação',(s.t?100*s.n/s.t:0).toFixed(1)+'%','var(--pb)']].map(([a,b,c])=>`<div class="card"><span class="mut">${a}</span><b style="color:${c}">${b}</b></div>`).join('');
+ const d=Object.keys(s.day).reverse();bars('#g1',d,[d.map(k=>s.day[k])],['#8B5CF6']);bars('#g2',['Nível 1','Nível 2','Nível 3'],[1,2,3].map(n=>[s.niv[n][0]]).map(a=>a[0]).length?[[1,2,3].map(n=>s.niv[n][0]),[1,2,3].map(n=>s.niv[n][1])]:[],['#8B5CF6','#4C1D95']);
+ bars('#g3',s.usr.map(u=>u[0]),[s.usr.map(u=>u[1])],['#8B5CF6'],true);
+ const cv=$('#g4'),x=cv.getContext('2d');x.clearRect(0,0,560,220);if(!s.t){x.fillStyle='#A8A69E';x.textAlign='center';x.fillText('Sem dados no período',280,110)}else{let a=-Math.PI/2;[[s.c,'#22C55E'],[s.n,'#EF4444']].forEach(([v,c])=>{const e=a+2*Math.PI*v/s.t;x.beginPath();x.arc(280,110,85,a,e);x.arc(280,110,50,e,a,true);x.closePath();x.fillStyle=c;x.fill();a=e});x.fillStyle='#ECEBE6';x.textAlign='center';x.font='bold 20px sans-serif';x.fillText((100*s.c/s.t).toFixed(0)+'%',280,117)}}
+$('#rPer').onchange=rel;$('#bPdf').onclick=()=>{go('rel');print()};
+$('#bCsv').onclick=()=>{const s=stats(),rows=[['data_hora','usuario','resultado','nivel','confianca','motivo'],...S.logs.map(l=>[l.t,l.u,l.res,l.nv||'',l.conf!=null?l.conf.toFixed(1).replace('.',','):'',l.m])];
+ const csv='\ufeff'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');dl(csv,'auditoria_cofre.csv','text/csv')};
+function dl(txt,nome,tipo){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:tipo}));a.download=nome;a.click()}
+
+/* ---------- admin ---------- */
+function adm(){const ok=sessOk(3);$('#admLock').style.display=ok?'none':'block';$('#admBox').style.display=ok?'':'none';if(!ok)return;
+ $('#tol').value=S.tol;$('#tes').value=S.tes;tolL();$('#ub').innerHTML=S.users.map(u=>`<tr><td>${esc(u.nome)}</td><td>${esc(u.cargo)}</td><td>${u.nivel}</td><td>${esc(u.divisao)}</td><td><button class="b g" data-e="${u.id}">Editar</button> <button class="b g" data-r="${u.id}">Remover</button></td></tr>`).join('')}
+const tolL=()=>{$('#tolL').textContent=`Tolerância (distância máx.): ${(+$('#tol').value).toFixed(2)}`;$('#tesL').textContent=`Tempo de rosto estável: ${(+$('#tes').value).toFixed(1)} s`};
+$('#tol').oninput=$('#tes').oninput=tolL;
+$('#bAj').onclick=async()=>{if(!sessOk(3))return adm();S.tol=+$('#tol').value;S.tes=+$('#tes').value;await save();await addLog(S.sess.u.nome,'ADMIN',3,null,`Ajustes: tolerância ${S.tol}, estabilidade ${S.tes}s.`);alert('Ajustes salvos.')};
+let editId=null;
+$('#ub').onclick=async e=>{if(!sessOk(3))return adm();const id=+(e.target.dataset.e||e.target.dataset.r),u=S.users.find(x=>x.id===id);if(!u)return;
+ if(e.target.dataset.r){if(u.nivel===3)return alert('O Ministro (nível 3) não pode ser removido.');if(!confirm(`Remover "${u.nome}"? O vetor facial será apagado.`))return;S.users=S.users.filter(x=>x!==u);await save();await addLog(S.sess.u.nome,'ADMIN',3,null,`Usuário "${u.nome}" removido.`);adm()}
+ else{editId=id;$('#eN').value=u.nome;$('#eC').value=u.cargo;$('#eNv').value=u.nivel;$('#eD').value=DIV.includes(u.divisao)?u.divisao:DIV[0];$('#eErr').textContent='';$('#dlg').showModal()}};
+$('#eNo').onclick=()=>$('#dlg').close();
+$('#eOk').onclick=async()=>{const u=S.users.find(x=>x.id===editId),n=$('#eN').value.trim(),nv=+$('#eNv').value;
+ if(n.length<3)return $('#eErr').textContent='Nome inválido.';if(S.users.some(x=>x!==u&&x.nome.toLowerCase()===n.toLowerCase()))return $('#eErr').textContent='Nome já existe.';
+ if(u.nivel===3&&nv!==3)return $('#eErr').textContent='O Ministro não pode ser rebaixado.';if(nv===3&&u.nivel!==3&&hasMin())return $('#eErr').textContent='Já existe um Ministro.';
+ Object.assign(u,{nome:n,cargo:$('#eC').value.trim(),nivel:nv,divisao:nv===2?$('#eD').value:(nv===3?'Gabinete do Ministro':'Geral')});await save();await addLog(S.sess.u.nome,'ADMIN',3,null,`Usuário "${n}" editado.`);$('#dlg').close();adm()};
+$('#bBk').onclick=()=>dl(JSON.stringify({v:1,key:b64(RAW),users:S.users.map(({d,...u})=>u),logs:S.logs,cfg:{tol:S.tol,tes:S.tes}}),`backup_cofre_${new Date().toISOString().slice(0,10)}.json`,'application/json');
+$('#bRs').onclick=()=>$('#fRs').click();
+$('#fRs').onchange=async e=>{const f=e.target.files[0];if(!f||!confirm('Isto SUBSTITUI todos os dados atuais. Continuar?'))return;
+ try{const j=JSON.parse(await f.text());if(!j.key||!j.users)throw 0;await DB.set('key',unb(j.key));await DB.set('users',j.users);await DB.set('logs',j.logs||[]);await DB.set('cfg',{tol:j.cfg.tol,tes:j.cfg.tes,tent:0,bloq:0});alert('Backup restaurado. A página será recarregada.');location.reload()}catch(x){alert('Arquivo de backup inválido.')}};
+
+/* ---------- laço principal ---------- */
+let busy=false;
+async function tick(){
+ if(!busy&&camOk&&modelsOk&&['auth','cad','pipe'].includes(S.tab)&&vid.readyState>=2){busy=true;
+  try{const wantDesc=S.tab!=='auth'||performance.now()-tEnc>300;const r=await frame(wantDesc);if(r.desc)tEnc=performance.now();
+   if(S.tab==='auth'&&!r.desc&&R&&R.cls&&!r.err){r.cls=R.cls;r.st[4]=R.st[4];r.st[5]=R.st[5];r.dt[4]=R.dt[4];r.dt[5]=R.dt[5]}
+   R=r;if(S.tab==='auth')await authStep(r);draw(r)}catch(e){console.error(e)}busy=false}
+ setTimeout(tick,40)}
+function draw(r){ox.clearRect(0,0,640,480);const col=A.st==='res'?($('#resC').classList.contains('ok')?'#22C55E':'#EF4444'):'#8B5CF6';
+ const L=r.det?[r.det]:(r.all||[]);ox.strokeStyle=col;ox.lineWidth=2;ox.fillStyle='#fff';
+ L.forEach(d=>{const b=d.detection.box;ox.strokeRect(b.x,b.y,b.width,b.height);d.landmarks.positions.forEach(p=>ox.fillRect(p.x-1,p.y-1,2,2))});
+ renderPh($('#phA'),r);
+ if(S.tab==='auth'){$('#aMsg').textContent=A.msg;$('#aBar').style.width=A.prog*100+'%';$('#aInfo').textContent=['stab','blink'].includes(A.st)?`Piscadas detectadas: ${A.bl.n}`:'';
+  $('#tent').textContent=`Tentativas negadas: ${S.tent}/3 (bloqueio de 60 s)`;if(lockLeft()>0){$('#resC').className='card res no flash';$('#rBig').textContent='BLOQUEADO';$('#rWho').textContent=`Aguarde ${lockLeft()} s`;$('#rDet').textContent='Limite de tentativas negadas atingido.'}}
+ if(S.tab==='cad')$('#cMsg').textContent=r.err?r.msg:'Rosto OK — pronto para capturar.';
+ if(S.tab==='pipe'){renderPh($('#phP'),r);$('#pA').getContext('2d').drawImage(vid,0,0,320,240);const b=$('#pB').getContext('2d');b.drawImage(wc,0,0,320,240);const g=$('#pC').getContext('2d');g.filter='grayscale(1) contrast(1.4)';g.drawImage(wc,0,0,320,240);g.filter='none';
+  $('#pQ').textContent=`Luminosidade: ${r.lum.toFixed(0)}/255 · Nitidez: ${r.sharp.toFixed(0)}`;
+  if(r.cls)$('#pCls').textContent=`Candidato: ${r.cls.ok?r.cls.u.nome:'desconhecido'} · distância ${r.cls.d.toFixed(3)} · confiança ${r.cls.c.toFixed(0)}%`;else $('#pCls').textContent=r.msg||'—';
+  if(r.desc){const e=$('#pE').getContext('2d');e.clearRect(0,0,600,90);e.fillStyle='#8B5CF6';r.desc.forEach((v,i)=>{const h=Math.abs(v)/.3*40;e.fillRect(i*4.68,v>=0?45-h:45,3.5,h)})}}}
+
+(async()=>{
+ if(!window.faceapi||!crypto.subtle){$('#aMsg').textContent='Abra este arquivo no Chrome/Edge/Firefox com internet (a biblioteca de reconhecimento vem de uma CDN).';}
+ try{await load()}catch(e){console.error(e);$('#aMsg').textContent='Erro ao abrir o armazenamento local do navegador: '+e.message}
+ hdr();renderPh($('#phA'),null);$('#nDesc').textContent=NDESC[1];cadUI();go('auth');
+ await startCam();await loadModels();tick();
+ if(!hasMin())setTimeout(()=>{alert('Primeiro uso: cadastre o Ministro (nível 3) na aba Cadastro.');go('cad')},800);
+ setInterval(()=>{if(S.sess&&!sessOk()){S.sess=null;hdr();if(['cofre','adm','cad'].includes(S.tab)){alert('Sessão expirada por inatividade.');go('auth')}}},1000);
+})();
+</script>
+</body>
+</html>
